@@ -1,0 +1,12 @@
+[package]
+name = "sss"
+description = "TUI Shisen-Sho Player"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+crossterm = "0.23"
+graceful = "0.1"
+rand = "0.8"
+tui = "0.17"
