@@ -1,10 +1,10 @@
-use super::matrix::{Matrix, Position};
+use super::super::matrix::{Matrix, Position};
 use super::Tile;
 
 impl Matrix<Option<Tile>> {
 	const MAX_STEPS: usize = 2 + 2; // 2 turns + start + end
 
-	fn successors<'a>(&'a self, pos: Position, goal_tile: Tile) -> Vec<Position> {
+	fn successors(&self, pos: Position, goal_tile: Tile) -> Vec<Position> {
 		let mut ret = Vec::new();
 		let size = self.size();
 
@@ -76,7 +76,7 @@ impl Matrix<Option<Tile>> {
 					}
 					return best_solution;
 				}
-				return None;
+				None
 			}
 		}
 

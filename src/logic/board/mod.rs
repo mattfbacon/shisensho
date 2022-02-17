@@ -1,12 +1,11 @@
 use super::Tile;
 
 mod direction;
-pub mod matrix;
 mod path;
 mod widget;
 
+use super::matrix::{Matrix, Position, Size};
 use direction::Direction;
-use matrix::{Matrix, Position, Size};
 
 pub struct Board {
 	tiles: Matrix<Option<Tile>>,
@@ -74,8 +73,12 @@ impl Board {
 				return;
 			} else if origin_tile == tile {
 				if let Some(path) = self.tiles.find_path(origin, pos) {
-					self.at_mut(origin).map(|origin| *origin = None);
-					self.at_mut(pos).map(|pos| *pos = None);
+					if let Some(origin) = self.at_mut(origin) {
+						*origin = None;
+					}
+					if let Some(pos) = self.at_mut(pos) {
+						*pos = None;
+					}
 					self.shown_path = Some((std::time::Instant::now(), path));
 					self.selected = None;
 					return;

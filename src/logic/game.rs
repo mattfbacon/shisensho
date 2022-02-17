@@ -5,13 +5,16 @@ pub struct Game {
 	board: Board,
 }
 
-impl Game {
-	pub fn new() -> Self {
+impl Default for Game {
+	fn default() -> Self {
 		Self {
 			board: Board::default(),
 			started: std::time::Instant::now(),
 		}
 	}
+}
+
+impl Game {
 	pub fn board_area(&self, rows: u16, columns: u16) -> tui::layout::Rect {
 		self.board
 			.widget_area(tui::layout::Rect {
@@ -22,7 +25,7 @@ impl Game {
 			})
 			.unwrap_or(tui::layout::Rect { x: 0, y: 0, height: 0, width: 0 })
 	}
-	pub fn click(&mut self, position: super::board::matrix::Position) {
+	pub fn click(&mut self, position: super::matrix::Position) {
 		self.board.click(position)
 	}
 

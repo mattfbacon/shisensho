@@ -1,5 +1,5 @@
 use crate::app::Frame;
-use crate::game::Game;
+use crate::logic::Game;
 use crossterm::event::{Event, KeyCode, KeyModifiers, MouseButton, MouseEventKind};
 use tui::{
 	layout::{Alignment, Rect},
@@ -33,7 +33,7 @@ impl Ui {
 		match event {
 			Event::Key(event) => match event.code {
 				KeyCode::Enter if event.modifiers.is_empty() => {
-					self.state = GameState::Playing(Game::new());
+					self.state = GameState::Playing(Game::default());
 				}
 				_ => (),
 			},
@@ -58,7 +58,7 @@ impl Ui {
 					}) {
 						let x = (event.column - board_area.x).try_into().unwrap();
 						let y = (event.row - board_area.y).try_into().unwrap();
-						game.click(crate::game::board::matrix::Position::from_xy(x, y));
+						game.click(crate::logic::matrix::Position::from_xy(x, y));
 					}
 				}
 				_ => (),

@@ -149,9 +149,9 @@ impl<T> Matrix<T> {
 			let mut data = Vec::with_capacity(self.data.capacity() + (self.size().width() * 2) + (self.size().height() * 2) + 4);
 			data.extend(repeat(element).take(self.size.width + 2));
 			for row in self.rows() {
-				data.push(element.clone());
+				data.push(element);
 				data.extend(row.iter().copied());
-				data.push(element.clone());
+				data.push(element);
 			}
 			data.extend(repeat(element).take(self.size.width + 2));
 			data

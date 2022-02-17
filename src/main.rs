@@ -1,7 +1,7 @@
 use anyhow::Context;
 
 mod app;
-mod game;
+mod logic;
 mod ui;
 
 fn main() -> anyhow::Result<()> {
