@@ -98,13 +98,44 @@ mod test {
 	use super::super::{Matrix, Position, Size, Tile};
 
 	#[test]
-	pub fn successors() {
+	pub fn successors_easy() {
 		use std::collections::HashSet;
 
 		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
 		assert_eq!(
 			matrix.successors(Position::from_xy(0, 0), Tile::Blank).into_iter().collect::<HashSet<_>>(),
 			HashSet::from([Position::from_xy(0, 1), Position::from_xy(0, 2), Position::from_xy(1, 0), Position::from_xy(2, 0)])
+		);
+	}
+	#[test]
+	pub fn successors_hard() {
+		use std::collections::HashSet;
+
+		let matrix = Matrix::new(
+			Size::from_width_height(4, 4),
+			vec![
+				Some(Tile::Blank),
+				Some(Tile::Sticks1),
+				Some(Tile::Blank),
+				None,
+				None,
+				None,
+				None,
+				None,
+				None,
+				Some(Tile::Sticks1),
+				None,
+				None,
+				None,
+				None,
+				Some(Tile::Blank),
+				None,
+			],
+		)
+		.unwrap();
+		assert_eq!(
+			matrix.successors(Position::from_xy(2, 0), Tile::Blank).into_iter().collect::<HashSet<_>>(),
+			HashSet::from([Position::from_xy(3, 0), Position::from_xy(2, 1), Position::from_xy(2, 2), Position::from_xy(2, 3)])
 		);
 	}
 	#[test]
@@ -130,5 +161,50 @@ mod test {
 			matrix.find_path(Position::from_xy(0, 0), Position::from_xy(1, 2)).expect("Solution exists").as_slice(),
 			&[Position::from_xy(0, 0), Position::from_xy(0, 1), Position::from_xy(1, 1), Position::from_xy(1, 2)]
 		);
+	}
+	#[test]
+	pub fn no_path() {
+		let matrix = Matrix::new(
+			Size::from_width_height(3, 3),
+			vec![
+				Some(Tile::Blank),
+				Some(Tile::Sticks1),
+				Some(Tile::Sticks1),
+				Some(Tile::Sticks1),
+				Some(Tile::Sticks1),
+				Some(Tile::Sticks1),
+				Some(Tile::Sticks1),
+				Some(Tile::Blank),
+				Some(Tile::Sticks1),
+			],
+		)
+		.unwrap();
+		assert_eq!(matrix.find_path(Position::from_xy(0, 0), Position::from_xy(1, 2)), None);
+	}
+	#[test]
+	pub fn too_long() {
+		let matrix = Matrix::new(
+			Size::from_width_height(4, 4),
+			vec![
+				Some(Tile::Blank),
+				Some(Tile::Sticks1),
+				None,
+				None,
+				None,
+				None,
+				Some(Tile::Sticks1),
+				None,
+				Some(Tile::Sticks1),
+				None,
+				None,
+				Some(Tile::Sticks1),
+				None,
+				Some(Tile::Sticks1),
+				None,
+				Some(Tile::Blank),
+			],
+		)
+		.unwrap();
+		assert_eq!(matrix.find_path(Position::from_xy(0, 0), Position::from_xy(3, 3)), None);
 	}
 }
