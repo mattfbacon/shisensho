@@ -73,7 +73,7 @@ impl Matrix<Option<Tile>> {
 					if current == self.goal {
 						return Some(trace_answer(self.goal, self.start, &mut self.traceback));
 					}
-					if steps > self.maximum_steps.try_into().unwrap() {
+					if steps >= self.maximum_steps.try_into().unwrap() {
 						break;
 					}
 					for successor in self.matrix.successors(current, self.goal_tile) {
@@ -90,7 +90,7 @@ impl Matrix<Option<Tile>> {
 		}
 
 		let mut queue = VecDeque::new();
-		queue.push_back((start, 0));
+		queue.push_back((start, 1));
 		let visited = HashMap::from([(start, 1)]);
 		Helper {
 			matrix: self,
