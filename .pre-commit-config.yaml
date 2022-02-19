@@ -1,0 +1,19 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: mixed-line-ending
+        args: ['--fix=lf']
+    -   id: check-added-large-files
+        args: ['--maxkb=500']
+-   repo: https://github.com/doublify/pre-commit-rust
+    rev: eeee35a89e69d5772bdee97db1a6a898467b686e
+    hooks:
+    -   id: cargo-check
+-   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: 16762a19ddaa3a966ca7c4edd9ade6189f0df627
+    hooks:
+    -   id: pretty-format-rust

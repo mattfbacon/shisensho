@@ -1,0 +1,15 @@
+[package]
+name = "encde"
+version = "0.1.0"
+edition = "2021"
+workspace = ".."
+
+[dependencies]
+encde_derive = { path = "derive", optional = true }
+paste = "^1.0.6"
+
+[features]
+"big_endian" = []
+"derive" = ["encde_derive"]
+
+default = ["derive"]

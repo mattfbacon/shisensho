@@ -1,0 +1,7 @@
+[package]
+name = "encde_derive_test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+encde = { path = "..", features = ["derive"] }

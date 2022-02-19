@@ -1,0 +1,9 @@
+address = "127.0.0.1"
+
+[[logging]]
+file = "target/rust-mc.log"
+level = "debug"
+
+[[logging]]
+console = "stderr"
+level = "trace"

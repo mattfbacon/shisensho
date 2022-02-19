@@ -1,0 +1,13 @@
+[package]
+name = "encde_derive"
+version = "0.1.0"
+edition = "2021"
+workspace = "../.."
+
+[dependencies]
+syn = "^1.0"
+quote = "^1.0"
+proc-macro2 = "^1.0"
+
+[lib]
+proc-macro = true
