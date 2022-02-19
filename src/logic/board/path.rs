@@ -204,6 +204,11 @@ mod test {
 		assert_eq!(matrix.find_path(Position::from_xy(0, 0), Position::from_xy(1, 2)), None);
 	}
 	#[test]
+	pub fn barely_too_long() {
+		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None, Some(Tile::Blank), Some(Tile::Sticks1)]).unwrap();
+		assert_eq!(matrix.find_path(Position::from_xy(1, 2), Position::from_xy(2, 1)), None);
+	}
+	#[test]
 	pub fn too_long() {
 		let matrix = Matrix::new(
 			Size::from_width_height(4, 4),
