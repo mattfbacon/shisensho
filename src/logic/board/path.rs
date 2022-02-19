@@ -1,9 +1,9 @@
 use super::super::matrix::{Matrix, Position};
 use super::Tile;
+use std::collections::VecDeque;
 
 impl Matrix<Option<Tile>> {
 	const MAX_STEPS: usize = 2 + 2; // 2 turns + start + end
-
 	fn successors(&self, pos: Position, goal_tile: Tile) -> Vec<Position> {
 		let mut ret = Vec::new();
 		let size = self.size();
@@ -43,53 +43,66 @@ impl Matrix<Option<Tile>> {
 
 		struct Helper<'a> {
 			matrix: &'a Matrix<Option<Tile>>,
-			stack: Vec<Position>,
-			/// Position -> how many steps it took to reach that position (if there are fewer steps in this solution, we should not skip it)
+			queue: VecDeque<(Position, i32)>,
+			traceback: HashMap<Position, Position>,
 			visited: HashMap<Position, usize>,
 			goal: Position,
 			goal_tile: Tile,
+			start: Position,
+			maximum_steps: usize,
 		}
 
 		impl Helper<'_> {
-			fn solve(&mut self, current: Position) -> Option<Vec<Position>> {
-				let successors = self.matrix.successors(current, self.goal_tile);
-				for &successor in successors.iter() {
-					if successor == self.goal {
-						self.stack.push(successor);
-						return Some(self.stack.clone());
+			fn solve(&mut self) -> Option<Vec<Position>> {
+				fn trace_answer(goal: Position, start: Position, traceback: &mut HashMap<Position, Position>) -> Vec<Position> {
+					let mut current = goal;
+					let mut ret = Vec::new();
+					loop {
+						ret.push(current);
+						if current == start {
+							break;
+						}
+						current = traceback[&current];
 					}
+					// reverse the matrix
+					ret.reverse();
+					ret
 				}
-				if self.stack.len() < Matrix::MAX_STEPS - 1 {
-					let mut best_solution: Option<Vec<Position>> = None;
-					for &successor in successors.iter() {
-						if self.visited.get(&successor).map(|&depth_visited| self.stack.len() >= depth_visited).unwrap_or(false) {
+				while self.queue.len() > 0 {
+					let (current, steps) = self.queue.pop_front().unwrap();
+					if current == self.goal {
+						return Some(trace_answer(self.goal, self.start, &mut self.traceback));
+					}
+					if steps > self.maximum_steps.try_into().unwrap() {
+						break;
+					}
+					for successor in self.matrix.successors(current, self.goal_tile) {
+						if self.visited.contains_key(&successor) {
 							continue;
 						}
-						self.stack.push(successor);
-						self.visited.insert(successor, self.stack.len());
-						if let Some(solution) = self.solve(successor) {
-							if best_solution.as_ref().map(|best_solution| solution.len() < best_solution.len()).unwrap_or(true) {
-								best_solution = Some(solution);
-							}
-						}
-						self.stack.pop();
+						self.traceback.insert(successor, current);
+						self.visited.insert(successor, 1);
+						self.queue.push_back((successor, steps + 1));
 					}
-					return best_solution;
 				}
 				None
 			}
 		}
 
-		let stack = vec![start];
-		let visited = HashMap::from([(start, 0)]);
+		let mut queue = VecDeque::new();
+		queue.push_back((start, 0));
+		let visited = HashMap::from([(start, 1)]);
 		Helper {
 			matrix: self,
-			stack,
+			queue,
+			traceback: HashMap::new(),
 			visited,
 			goal: end,
 			goal_tile: self.get(end).unwrap().unwrap(),
+			start,
+			maximum_steps: Self::MAX_STEPS,
 		}
-		.solve(start)
+		.solve()
 	}
 }
 
