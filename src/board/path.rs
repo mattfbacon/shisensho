@@ -1,10 +1,11 @@
-use super::super::matrix::{Matrix, Position};
 use super::Tile;
+use crate::ext::vec2::*;
+use crate::matrix::Matrix;
 
 impl Matrix<Option<Tile>> {
 	const MAX_STEPS: usize = 2 + 2; // 2 turns + start + end
 
-	fn successors(&self, pos: Position, goal_tile: Tile) -> Vec<Position> {
+	fn successors(&self, pos: Vec2, goal_tile: Tile) -> Vec<Vec2> {
 		let mut ret = Vec::new();
 		let size = self.size();
 
@@ -27,31 +28,31 @@ impl Matrix<Option<Tile>> {
 			};
 		}
 		// left
-		add_items_for!((0..pos.x()).into_iter().rev().map(with_x));
+		add_items_for!((0..pos.x).into_iter().rev().map(with_x));
 		// right
-		add_items_for!(((pos.x() + 1)..size.width()).into_iter().map(with_x));
+		add_items_for!(((pos.x + 1)..size.width()).into_iter().map(with_x));
 		// above
-		add_items_for!((0..pos.y()).into_iter().rev().map(with_y));
+		add_items_for!((0..pos.y).into_iter().rev().map(with_y));
 		// below
-		add_items_for!((pos.y() + 1..size.height()).into_iter().map(with_y));
+		add_items_for!((pos.y + 1..size.height()).into_iter().map(with_y));
 
 		ret
 	}
 	/// Returns the corners of the path including the start and end, if a path could be found.
-	pub(super) fn find_path(&self, start: Position, end: Position) -> Option<Vec<Position>> {
+	pub(super) fn find_path(&self, start: Vec2, end: Vec2) -> Option<Vec<Vec2>> {
 		use std::collections::HashMap;
 
 		struct Helper<'a> {
 			matrix: &'a Matrix<Option<Tile>>,
-			stack: Vec<Position>,
+			stack: Vec<Vec2>,
 			/// Position -> how many steps it took to reach that position (if there are fewer steps in this solution, we should not skip it)
-			visited: HashMap<Position, usize>,
-			goal: Position,
+			visited: HashMap<Vec2, usize>,
+			goal: Vec2,
 			goal_tile: Tile,
 		}
 
 		impl Helper<'_> {
-			fn solve(&mut self, current: Position) -> Option<Vec<Position>> {
+			fn solve(&mut self, current: Vec2) -> Option<Vec<Vec2>> {
 				let successors = self.matrix.successors(current, self.goal_tile);
 				for &successor in successors.iter() {
 					if successor == self.goal {
@@ -60,7 +61,7 @@ impl Matrix<Option<Tile>> {
 					}
 				}
 				if self.stack.len() < Matrix::MAX_STEPS - 1 {
-					let mut best_solution: Option<Vec<Position>> = None;
+					let mut best_solution: Option<Vec<Vec2>> = None;
 					for &successor in successors.iter() {
 						if self.visited.get(&successor).map(|&depth_visited| self.stack.len() >= depth_visited).unwrap_or(false) {
 							continue;
@@ -95,24 +96,26 @@ impl Matrix<Option<Tile>> {
 
 #[cfg(test)]
 mod test {
-	use super::super::{Matrix, Position, Size, Tile};
+	use crate::matrix::Matrix;
+	use crate::tile::Tile;
+	use cursive::Vec2;
 
 	#[test]
-	pub fn successors_easy() {
+	fn successors_easy() {
 		use std::collections::HashSet;
 
-		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
 		assert_eq!(
-			matrix.successors(Position::from_xy(0, 0), Tile::Blank).into_iter().collect::<HashSet<_>>(),
-			HashSet::from([Position::from_xy(0, 1), Position::from_xy(0, 2), Position::from_xy(1, 0), Position::from_xy(2, 0)])
+			matrix.successors(Vec2::new(0, 0), Tile::Blank).into_iter().collect::<HashSet<_>>(),
+			HashSet::from([Vec2::new(0, 1), Vec2::new(0, 2), Vec2::new(1, 0), Vec2::new(2, 0)])
 		);
 	}
 	#[test]
-	pub fn successors_hard() {
+	fn successors_hard() {
 		use std::collections::HashSet;
 
 		let matrix = Matrix::new(
-			Size::from_width_height(4, 4),
+			Vec2::new(4, 4),
 			vec![
 				Some(Tile::Blank),
 				Some(Tile::Sticks1),
@@ -134,14 +137,15 @@ mod test {
 		)
 		.unwrap();
 		assert_eq!(
-			matrix.successors(Position::from_xy(2, 0), Tile::Blank).into_iter().collect::<HashSet<_>>(),
-			HashSet::from([Position::from_xy(3, 0), Position::from_xy(2, 1), Position::from_xy(2, 2), Position::from_xy(2, 3)])
+			matrix.successors(Vec2::new(2, 0), Tile::Blank).into_iter().collect::<HashSet<_>>(),
+			HashSet::from([Vec2::new(3, 0), Vec2::new(2, 1), Vec2::new(2, 2), Vec2::new(2, 3)])
 		);
 	}
 
-	fn check_solution(start: Position, end: Position, path: &[Position], matrix: &Matrix<Option<Tile>>) {
+	fn check_solution(start: Vec2, end: Vec2, path: &[Vec2], expected_turns: usize, matrix: &Matrix<Option<Tile>>) {
 		assert_eq!(path[0], start);
 		assert_eq!(*path.last().unwrap(), end);
+		assert_eq!(path.len(), expected_turns + 2);
 		let goal_tile = matrix.get(end).unwrap().unwrap();
 		for items in path.windows(2) {
 			let first = items[0];
@@ -151,30 +155,30 @@ mod test {
 	}
 
 	#[test]
-	pub fn basic() {
-		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
-		let start = Position::from_xy(0, 0);
-		let end = Position::from_xy(2, 0);
-		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), &matrix);
+	fn basic() {
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
+		let start = Vec2::new(0, 0);
+		let end = Vec2::new(2, 0);
+		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), 0, &matrix);
 	}
 	#[test]
-	pub fn around() {
-		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
-		let start = Position::from_xy(0, 0);
-		let end = Position::from_xy(2, 0);
-		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), &matrix);
+	fn around() {
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
+		let start = Vec2::new(0, 0);
+		let end = Vec2::new(2, 0);
+		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), 2, &matrix);
 	}
 	#[test]
-	pub fn zigzag() {
-		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None]).unwrap();
-		let start = Position::from_xy(0, 0);
-		let end = Position::from_xy(1, 2);
-		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), &matrix);
+	fn zigzag() {
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None]).unwrap();
+		let start = Vec2::new(0, 0);
+		let end = Vec2::new(1, 2);
+		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), 2, &matrix);
 	}
 	#[test]
-	pub fn no_path() {
+	fn no_path() {
 		let matrix = Matrix::new(
-			Size::from_width_height(3, 3),
+			Vec2::new(3, 3),
 			vec![
 				Some(Tile::Blank),
 				Some(Tile::Sticks1),
@@ -188,17 +192,17 @@ mod test {
 			],
 		)
 		.unwrap();
-		assert_eq!(matrix.find_path(Position::from_xy(0, 0), Position::from_xy(1, 2)), None);
+		assert_eq!(matrix.find_path(Vec2::new(0, 0), Vec2::new(1, 2)), None);
 	}
 	#[test]
 	pub fn barely_too_long() {
-		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None, Some(Tile::Blank), Some(Tile::Sticks1)]).unwrap();
-		assert_eq!(matrix.find_path(Position::from_xy(1, 2), Position::from_xy(2, 1)), None);
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None, Some(Tile::Blank), Some(Tile::Sticks1)]).unwrap();
+		assert_eq!(matrix.find_path(Vec2::new(1, 2), Vec2::new(2, 1)), None);
 	}
 	#[test]
-	pub fn too_long() {
+	fn too_long() {
 		let matrix = Matrix::new(
-			Size::from_width_height(4, 4),
+			Vec2::new(4, 4),
 			vec![
 				Some(Tile::Blank),
 				Some(Tile::Sticks1),
@@ -219,6 +223,6 @@ mod test {
 			],
 		)
 		.unwrap();
-		assert_eq!(matrix.find_path(Position::from_xy(0, 0), Position::from_xy(3, 3)), None);
+		assert_eq!(matrix.find_path(Vec2::new(0, 0), Vec2::new(3, 3)), None);
 	}
 }

@@ -1,32 +1,28 @@
-use anyhow::Context;
+use cursive::views::LinearLayout;
+use cursive::{Cursive, CursiveExt};
 
-mod app;
-mod logic;
-mod ui;
+mod board;
+mod elapsed;
+mod ext;
+mod matrix;
+mod theme;
+mod tile;
 
 fn main() -> anyhow::Result<()> {
-	let signal_guard = graceful::SignalGuard::new();
+	let mut siv = Cursive::new();
 
-	{
-		let old_hook = std::panic::take_hook();
-		std::panic::set_hook(Box::new(move |info: &std::panic::PanicInfo<'_>| {
-			app::App::cleanup().unwrap();
-			old_hook(info)
-		}));
-	}
-	std::thread::spawn(|| {
-		let mut app = app::App::new().context("Could not create app").unwrap();
-		let ret = app.run();
-		std::mem::drop(app);
-		std::process::exit(match ret {
-			Ok(()) => 0,
-			Err(err) => {
-				eprintln!("Error: {:?}", err);
-				1
-			}
-		});
+	siv.set_theme(theme::theme());
+	siv.set_autorefresh(true);
+	siv.add_fullscreen_layer({
+		let board = board::Board::default();
+		let board = board::CenterView::new(board);
+		let elapsed = elapsed::Elapsed::new();
+		let mut ret = LinearLayout::vertical();
+		ret.add_child(board);
+		ret.add_child(elapsed);
+		ret
 	});
+	siv.run();
 
-	signal_guard.at_exit(move |_sig| app::App::cleanup().unwrap());
 	Ok(())
 }

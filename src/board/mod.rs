@@ -1,24 +1,25 @@
-use super::Tile;
+use crate::ext::vec2::*;
+use crate::matrix::Matrix;
+use crate::tile::Tile;
 
-mod direction;
+mod center_view;
 mod path;
-mod widget;
+mod view;
 
-use super::matrix::{Matrix, Position, Size};
-use direction::Direction;
+pub use center_view::CenterView;
 
 pub struct Board {
 	tiles: Matrix<Option<Tile>>,
-	selected: Option<Position>,
-	shown_path: Option<(std::time::Instant, Vec<Position>)>,
+	selected: Option<Vec2>,
+	shown_path: Option<(std::time::Instant, Vec<Vec2>)>,
 }
 
 impl Board {
-	pub const DEFAULT_SIZE: Size = Size::from_width_height(18, 8);
+	pub const DEFAULT_SIZE: Vec2 = Vec2 { x: 18, y: 8 };
 
 	const SHUFFLE_PASSES: usize = 100;
 
-	pub fn size(&self) -> Size {
+	pub fn size(&self) -> Vec2 {
 		self.tiles.size()
 	}
 
@@ -39,7 +40,7 @@ impl Board {
 		}
 	}
 
-	pub fn new(size: Size) -> Self {
+	pub fn new(size: Vec2) -> Self {
 		let total_tiles = size.area();
 		assert!(total_tiles % Tile::NUM_TILES == 0);
 		let mut ret = Self {
@@ -60,7 +61,7 @@ impl Default for Board {
 }
 
 impl Board {
-	pub fn click(&mut self, pos: Position) {
+	pub fn click(&mut self, pos: Vec2) {
 		let tile = match self.at(pos) {
 			None => return,
 			Some(None) => return,
@@ -88,10 +89,10 @@ impl Board {
 		self.selected = Some(pos);
 	}
 
-	pub fn at(&self, pos: Position) -> Option<&Option<Tile>> {
+	pub fn at(&self, pos: Vec2) -> Option<&Option<Tile>> {
 		self.tiles.get(pos)
 	}
-	pub fn at_mut(&mut self, pos: Position) -> Option<&mut Option<Tile>> {
+	pub fn at_mut(&mut self, pos: Vec2) -> Option<&mut Option<Tile>> {
 		self.tiles.get_mut(pos)
 	}
 	pub fn rows(&self) -> impl Iterator<Item = &[Option<Tile>]> {

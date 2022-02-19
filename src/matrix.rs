@@ -1,8 +1,70 @@
+use crate::ext::vec2::*;
+
 pub struct Matrix<T> {
-	size: Size,
+	size: Vec2,
 	data: Vec<T>,
 }
 
+impl<T> Matrix<T> {
+	pub fn new(size: Vec2, data: Vec<T>) -> Option<Self> {
+		if size.area() != data.len() {
+			None
+		} else {
+			Some(Self { size, data })
+		}
+	}
+	pub fn size(&self) -> Vec2 {
+		self.size
+	}
+	pub fn rows(&self) -> impl Iterator<Item = &[T]> {
+		self.data.chunks_exact(self.size.width())
+	}
+
+	fn index(&self, position: Vec2) -> Option<usize> {
+		if self.size.contains(position) {
+			Some((position.y * self.size.width()) + position.x)
+		} else {
+			None
+		}
+	}
+	pub fn swap(&mut self, a: Vec2, b: Vec2) {
+		match (self.index(a), self.index(b)) {
+			(Some(a), Some(b)) => self.data.swap(a, b),
+			_ => (),
+		}
+	}
+	pub fn get(&self, position: Vec2) -> Option<&T> {
+		self.data.get(self.index(position)?)
+	}
+	pub fn get_mut(&mut self, position: Vec2) -> Option<&mut T> {
+		let index = self.index(position)?;
+		self.data.get_mut(index)
+	}
+
+	/// Adds a 1-element-wide border of the given element around the matrix on all sides
+	pub fn add_border(&mut self, element: T)
+	where
+		T: Copy, // could be Clone if we didn't use `self.rows()` but that's unnecessary and overcomplicated
+	{
+		use std::iter::repeat;
+
+		self.data = {
+			let mut data = Vec::with_capacity(self.data.capacity() + (self.size().width() * 2) + (self.size().height() * 2) + 4);
+			data.extend(repeat(element).take(self.size.width() + 2));
+			for row in self.rows() {
+				data.push(element);
+				data.extend(row.iter().copied());
+				data.push(element);
+			}
+			data.extend(repeat(element).take(self.size.width() + 2));
+			data
+		};
+		self.size.x += 2;
+		self.size.y += 2;
+	}
+}
+
+/*
 #[derive(Clone, Copy)]
 pub struct Size {
 	width: usize,
@@ -49,6 +111,11 @@ impl Size {
 		let row = rng.gen_range(0..self.rows());
 		let col = rng.gen_range(0..self.columns());
 		Position::from_row_col(row, col)
+	}
+}
+impl From<Size> for cursive::Vec2 {
+	fn from(size: Size) -> Self {
+		Self::from((size.width, size.height))
 	}
 }
 
@@ -101,62 +168,9 @@ impl Position {
 		horizontal_neighbor ^ vertical_neighbor
 	}
 }
-
-impl<T> Matrix<T> {
-	pub fn new(size: Size, data: Vec<T>) -> Option<Self> {
-		if size.area() != data.len() {
-			None
-		} else {
-			Some(Self { size, data })
-		}
-	}
-	pub fn size(&self) -> Size {
-		self.size
-	}
-	pub fn rows(&self) -> impl Iterator<Item = &[T]> {
-		self.data.chunks_exact(self.size.width)
-	}
-
-	const fn index(&self, position: Position) -> Option<usize> {
-		if self.size.contains(position) {
-			Some((position.y() * self.size.width()) + position.x())
-		} else {
-			None
-		}
-	}
-	pub fn swap(&mut self, a: Position, b: Position) {
-		match (self.index(a), self.index(b)) {
-			(Some(a), Some(b)) => self.data.swap(a, b),
-			_ => (),
-		}
-	}
-	pub fn get(&self, position: Position) -> Option<&T> {
-		self.data.get(self.index(position)?)
-	}
-	pub fn get_mut(&mut self, position: Position) -> Option<&mut T> {
-		let index = self.index(position)?;
-		self.data.get_mut(index)
-	}
-
-	/// Adds a 1-element-wide border of the given element around the matrix on all sides
-	pub fn add_border(&mut self, element: T)
-	where
-		T: Copy, // could be Clone if we didn't use `self.rows()` but that's unnecessary and overcomplicated
-	{
-		use std::iter::repeat;
-
-		self.data = {
-			let mut data = Vec::with_capacity(self.data.capacity() + (self.size().width() * 2) + (self.size().height() * 2) + 4);
-			data.extend(repeat(element).take(self.size.width + 2));
-			for row in self.rows() {
-				data.push(element);
-				data.extend(row.iter().copied());
-				data.push(element);
-			}
-			data.extend(repeat(element).take(self.size.width + 2));
-			data
-		};
-		self.size.height += 2;
-		self.size.width += 2;
+impl From<Position> for cursive::Vec2 {
+	fn from(position: Position) -> Self {
+		Self::from((position.x, position.y))
 	}
 }
+*/

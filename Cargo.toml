@@ -6,7 +6,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
-crossterm = "0.23"
+cursive = "0.17"
 graceful = "0.1"
 rand = "0.8"
-tui = "0.17"
