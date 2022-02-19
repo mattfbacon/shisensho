@@ -138,29 +138,38 @@ mod test {
 			HashSet::from([Position::from_xy(3, 0), Position::from_xy(2, 1), Position::from_xy(2, 2), Position::from_xy(2, 3)])
 		);
 	}
+
+	fn check_solution(start: Position, end: Position, path: &[Position], matrix: &Matrix<Option<Tile>>) {
+		assert_eq!(path[0], start);
+		assert_eq!(*path.last().unwrap(), end);
+		let goal_tile = matrix.get(end).unwrap().unwrap();
+		for items in path.windows(2) {
+			let first = items[0];
+			let second = items[1];
+			assert!(matrix.successors(first, goal_tile).contains(&second));
+		}
+	}
+
 	#[test]
 	pub fn basic() {
 		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
-		assert_eq!(
-			matrix.find_path(Position::from_xy(0, 0), Position::from_xy(2, 0)).expect("Solution exists").as_slice(),
-			&[Position::from_xy(0, 0), Position::from_xy(2, 0)]
-		);
+		let start = Position::from_xy(0, 0);
+		let end = Position::from_xy(2, 0);
+		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), &matrix);
 	}
 	#[test]
 	pub fn around() {
 		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
-		assert_eq!(
-			matrix.find_path(Position::from_xy(0, 0), Position::from_xy(2, 0)).expect("Solution exists").as_slice(),
-			&[Position::from_xy(0, 0), Position::from_xy(0, 1), Position::from_xy(2, 1), Position::from_xy(2, 0)]
-		);
+		let start = Position::from_xy(0, 0);
+		let end = Position::from_xy(2, 0);
+		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), &matrix);
 	}
 	#[test]
 	pub fn zigzag() {
 		let matrix = Matrix::new(Size::from_width_height(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None]).unwrap();
-		assert_eq!(
-			matrix.find_path(Position::from_xy(0, 0), Position::from_xy(1, 2)).expect("Solution exists").as_slice(),
-			&[Position::from_xy(0, 0), Position::from_xy(0, 1), Position::from_xy(1, 1), Position::from_xy(1, 2)]
-		);
+		let start = Position::from_xy(0, 0);
+		let end = Position::from_xy(1, 2);
+		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), &matrix);
 	}
 	#[test]
 	pub fn no_path() {
