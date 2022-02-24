@@ -22,8 +22,8 @@ impl Board {
 		}
 	}
 	fn process_selections(&mut self) {
-		let start = self.confirmed_selection.unwrap();
-		let end = self.tentative_selection.unwrap().1;
+		let start = self.confirmed_selection.expect("No confirmed selection");
+		let end = self.tentative_selection.expect("No tentative selection").1;
 
 		if self.at(start) != self.at(end) {
 			self.confirmed_selection = Some(end);
@@ -32,8 +32,8 @@ impl Board {
 		}
 		let path = self.tiles.find_path(start, end);
 		if let Some(path) = path {
-			*self.at_mut(start).unwrap() = None;
-			*self.at_mut(end).unwrap() = None;
+			*self.at_mut(start).expect("Confirmed selection out of range") = None;
+			*self.at_mut(end).expect("Tentative selection out of range") = None;
 			self.shown_path = Some((std::time::Instant::now(), path));
 			self.tentative_selection = Some((std::time::Instant::now(), end));
 			self.confirmed_selection = None;
@@ -68,7 +68,7 @@ impl Board {
 		}
 		// if the new tentative selection would overlap the confirmed selection, move it again
 		if self.tentative_selection.map(|(_, sel)| sel) == self.confirmed_selection {
-			let (ref mut updated, ref mut selection) = self.tentative_selection.as_mut().unwrap();
+			let (ref mut updated, ref mut selection) = self.tentative_selection.as_mut().unwrap(); // guaranteed to be occupied as we filled it in the previous block
 			selection.move_wrapping(XY::new(x_delta, y_delta), self.tiles.size());
 			*updated = std::time::Instant::now();
 		}

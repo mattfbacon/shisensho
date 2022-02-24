@@ -11,6 +11,7 @@ impl View for Board {
 				let style = if self.confirmed_selection.map(|sel| sel == pos).unwrap_or(false) {
 					Effect::Reverse
 				} else if self.tentative_selection.map(|(_, sel)| sel == pos).unwrap_or(false) {
+					// the if condition would return false if the tentative selection was None. This is admittedly a bit ugly but I couldn't think of a better way.
 					let blink_on = self.tentative_selection.unwrap().0.elapsed().subsec_millis() < 500;
 					if blink_on {
 						Effect::Reverse

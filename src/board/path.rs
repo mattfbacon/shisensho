@@ -14,7 +14,7 @@ impl Matrix<Option<Tile>> {
 		macro_rules! add_items_for {
 			($iter:expr) => {
 				for current_pos in $iter {
-					let current_tile = *self.get(current_pos).unwrap();
+					let current_tile = *self.get(current_pos).unwrap(); // the position is guaranteed to be inside the matrix by the caller
 					if current_tile.is_none() {
 						ret.push(current_pos);
 						continue;
@@ -88,7 +88,7 @@ impl Matrix<Option<Tile>> {
 			stack,
 			visited,
 			goal: end,
-			goal_tile: self.get(end).unwrap().unwrap(),
+			goal_tile: self.get(end).unwrap().unwrap(), // the position is guaranteed to be inside the matrix by the caller
 		}
 		.solve(start)
 	}
@@ -104,7 +104,7 @@ mod test {
 	fn successors_easy() {
 		use std::collections::HashSet;
 
-		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]);
 		assert_eq!(
 			matrix.successors(Vec2::new(0, 0), Tile::Blank).into_iter().collect::<HashSet<_>>(),
 			HashSet::from([Vec2::new(0, 1), Vec2::new(0, 2), Vec2::new(1, 0), Vec2::new(2, 0)])
@@ -134,8 +134,7 @@ mod test {
 				Some(Tile::Blank),
 				None,
 			],
-		)
-		.unwrap();
+		);
 		assert_eq!(
 			matrix.successors(Vec2::new(2, 0), Tile::Blank).into_iter().collect::<HashSet<_>>(),
 			HashSet::from([Vec2::new(3, 0), Vec2::new(2, 1), Vec2::new(2, 2), Vec2::new(2, 3)])
@@ -156,21 +155,21 @@ mod test {
 
 	#[test]
 	fn basic() {
-		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), None, Some(Tile::Blank), None, None, None, None, None, None]);
 		let start = Vec2::new(0, 0);
 		let end = Vec2::new(2, 0);
 		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), 0, &matrix);
 	}
 	#[test]
 	fn around() {
-		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), Some(Tile::Blank), None, None, None, None, None, None]).unwrap();
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), Some(Tile::Blank), None, None, None, None, None, None]);
 		let start = Vec2::new(0, 0);
 		let end = Vec2::new(2, 0);
 		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), 2, &matrix);
 	}
 	#[test]
 	fn zigzag() {
-		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None]).unwrap();
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![Some(Tile::Blank), Some(Tile::Sticks1), None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None]);
 		let start = Vec2::new(0, 0);
 		let end = Vec2::new(1, 2);
 		check_solution(start, end, &matrix.find_path(start, end).expect("Solution exists"), 2, &matrix);
@@ -190,13 +189,12 @@ mod test {
 				Some(Tile::Blank),
 				Some(Tile::Sticks1),
 			],
-		)
-		.unwrap();
+		);
 		assert_eq!(matrix.find_path(Vec2::new(0, 0), Vec2::new(1, 2)), None);
 	}
 	#[test]
 	pub fn barely_too_long() {
-		let matrix = Matrix::new(Vec2::new(3, 3), vec![None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None, Some(Tile::Blank), Some(Tile::Sticks1)]).unwrap();
+		let matrix = Matrix::new(Vec2::new(3, 3), vec![None, None, None, None, Some(Tile::Sticks1), Some(Tile::Blank), None, Some(Tile::Blank), Some(Tile::Sticks1)]);
 		assert_eq!(matrix.find_path(Vec2::new(1, 2), Vec2::new(2, 1)), None);
 	}
 	#[test]
@@ -221,8 +219,7 @@ mod test {
 				None,
 				Some(Tile::Blank),
 			],
-		)
-		.unwrap();
+		);
 		assert_eq!(matrix.find_path(Vec2::new(0, 0), Vec2::new(3, 3)), None);
 	}
 }

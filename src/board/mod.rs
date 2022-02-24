@@ -48,7 +48,7 @@ impl Board {
 		let total_tiles = size.area();
 		assert!(total_tiles % Tile::NUM_TILES == 0);
 		let mut ret = Self {
-			tiles: Matrix::new(size, Self::tiles_unshuffled(total_tiles / Tile::NUM_TILES)).unwrap(),
+			tiles: Matrix::new(size, Self::tiles_unshuffled(total_tiles / Tile::NUM_TILES)),
 			confirmed_selection: None,
 			tentative_selection: None,
 			shown_path: None,

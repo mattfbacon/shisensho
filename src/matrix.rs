@@ -6,12 +6,9 @@ pub struct Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-	pub fn new(size: Vec2, data: Vec<T>) -> Option<Self> {
-		if size.area() != data.len() {
-			None
-		} else {
-			Some(Self { size, data })
-		}
+	pub fn new(size: Vec2, data: Vec<T>) -> Self {
+		assert!(size.area() == data.len());
+		Self { size, data }
 	}
 	pub fn size(&self) -> Vec2 {
 		self.size
@@ -28,8 +25,8 @@ impl<T> Matrix<T> {
 		}
 	}
 	pub fn swap(&mut self, a: Vec2, b: Vec2) {
-		let a = self.index(a).unwrap();
-		let b = self.index(b).unwrap();
+		let a = self.index(a).expect("First position out of range");
+		let b = self.index(b).expect("Second position out of range");
 		self.data.swap(a, b);
 	}
 	pub fn get(&self, position: Vec2) -> Option<&T> {
