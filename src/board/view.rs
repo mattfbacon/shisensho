@@ -8,7 +8,19 @@ impl View for Board {
 		for (y, row) in self.rows().enumerate() {
 			for (x, tile) in row.iter().enumerate() {
 				let pos = Vec2::from((x, y));
-				printer.with_effect(if self.selected == Some(pos.into()) { Effect::Reverse } else { Effect::Simple }, move |printer| {
+				let style = if self.confirmed_selection.map(|sel| sel == pos).unwrap_or(false) {
+					Effect::Reverse
+				} else if self.tentative_selection.map(|(_, sel)| sel == pos).unwrap_or(false) {
+					let blink_on = self.tentative_selection.unwrap().0.elapsed().subsec_millis() < 500;
+					if blink_on {
+						Effect::Reverse
+					} else {
+						Effect::Simple
+					}
+				} else {
+					Effect::Simple
+				};
+				printer.with_effect(style, move |printer| {
 					printer.print(pos, tile.map(|tile| tile.repr()).unwrap_or(" "));
 				})
 			}
@@ -62,17 +74,20 @@ impl View for Board {
 	fn on_event(&mut self, event: Event) -> EventResult {
 		use cursive::event::{MouseButton, MouseEvent};
 		match event {
-			Event::FocusLost => {
-				self.selected = None;
-				EventResult::Consumed(None)
-			}
 			Event::Mouse {
 				offset,
 				position,
 				event: MouseEvent::Release(MouseButton::Left),
 			} => {
 				if Rect::from_size(offset, self.tiles.size()).contains(position) {
-					self.click(position - offset);
+					self.on_click(position - offset);
+					EventResult::Consumed(None)
+				} else {
+					EventResult::Ignored
+				}
+			}
+			Event::Key(key) => {
+				if self.on_key(key) {
 					EventResult::Consumed(None)
 				} else {
 					EventResult::Ignored

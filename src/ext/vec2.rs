@@ -1,4 +1,5 @@
 pub use cursive::Vec2;
+use cursive::XY;
 
 pub trait Vec2Ext {
 	fn area(self) -> usize;
@@ -11,6 +12,7 @@ pub trait Vec2Ext {
 	fn with_y(self, new_y: usize) -> Vec2;
 	fn map_x(self, f: impl FnOnce(usize) -> usize) -> Vec2;
 	fn map_y(self, f: impl FnOnce(usize) -> usize) -> Vec2;
+	fn move_wrapping(&mut self, movement: XY<isize>, within: Vec2);
 }
 
 impl Vec2Ext for Vec2 {
@@ -53,5 +55,24 @@ impl Vec2Ext for Vec2 {
 	}
 	fn map_y(self, f: impl FnOnce(usize) -> usize) -> Vec2 {
 		self.with_y(f(self.y))
+	}
+	fn move_wrapping(&mut self, movement: XY<isize>, within: Vec2) {
+		macro_rules! do_it {
+			($field:ident) => {
+				if movement.$field < 0 {
+					let to_sub = -movement.$field as usize;
+					if let Some(new_value) = self.$field.checked_sub(to_sub) {
+						self.$field = new_value;
+					} else {
+						self.$field = within.$field - to_sub;
+					}
+				} else {
+					self.$field += movement.$field as usize;
+					self.$field %= within.$field;
+				}
+			};
+		}
+		do_it!(x);
+		do_it!(y);
 	}
 }

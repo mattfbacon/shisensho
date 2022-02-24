@@ -3,6 +3,7 @@ use crate::matrix::Matrix;
 use crate::tile::Tile;
 
 mod center_view;
+mod events;
 mod path;
 mod view;
 
@@ -10,7 +11,10 @@ pub use center_view::CenterView;
 
 pub struct Board {
 	tiles: Matrix<Option<Tile>>,
-	selected: Option<Vec2>,
+	confirmed_selection: Option<Vec2>,
+	// the Instant stores when the selection was last updated and is used for blinking
+	tentative_selection: Option<(std::time::Instant, Vec2)>,
+	// the Instant stores when the match with the shown path was made and is used for fading
 	shown_path: Option<(std::time::Instant, Vec<Vec2>)>,
 }
 
@@ -45,7 +49,8 @@ impl Board {
 		assert!(total_tiles % Tile::NUM_TILES == 0);
 		let mut ret = Self {
 			tiles: Matrix::new(size, Self::tiles_unshuffled(total_tiles / Tile::NUM_TILES)).unwrap(),
-			selected: None,
+			confirmed_selection: None,
+			tentative_selection: None,
 			shown_path: None,
 		};
 		ret.shuffle();
@@ -61,39 +66,17 @@ impl Default for Board {
 }
 
 impl Board {
-	pub fn click(&mut self, pos: Vec2) {
-		let tile = match self.at(pos) {
-			None => return,
-			Some(None) => return,
-			Some(Some(tile)) => *tile,
-		};
-		if let Some(origin) = self.selected {
-			let origin_tile = self.at(origin).unwrap().unwrap();
-			if origin == pos {
-				self.selected = None;
-				return;
-			} else if origin_tile == tile {
-				if let Some(path) = self.tiles.find_path(origin, pos) {
-					if let Some(origin) = self.at_mut(origin) {
-						*origin = None;
-					}
-					if let Some(pos) = self.at_mut(pos) {
-						*pos = None;
-					}
-					self.shown_path = Some((std::time::Instant::now(), path));
-					self.selected = None;
-					return;
-				}
-			}
+	pub fn at(&self, pos: Vec2) -> Option<Tile> {
+		match self.tiles.get(pos) {
+			None => None,
+			Some(&maybe_tile) => maybe_tile,
 		}
-		self.selected = Some(pos);
-	}
-
-	pub fn at(&self, pos: Vec2) -> Option<&Option<Tile>> {
-		self.tiles.get(pos)
 	}
 	pub fn at_mut(&mut self, pos: Vec2) -> Option<&mut Option<Tile>> {
 		self.tiles.get_mut(pos)
+	}
+	pub fn is_occupied(&self, pos: Vec2) -> bool {
+		self.at(pos).is_some()
 	}
 	pub fn rows(&self) -> impl Iterator<Item = &[Option<Tile>]> {
 		self.tiles.rows()
