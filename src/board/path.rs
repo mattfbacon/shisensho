@@ -40,57 +40,46 @@ impl Matrix<Option<Tile>> {
 	}
 	/// Returns the corners of the path including the start and end, if a path could be found.
 	pub(super) fn find_path(&self, start: Vec2, end: Vec2) -> Option<Vec<Vec2>> {
-		use std::collections::HashMap;
+		use std::collections::{HashMap, HashSet, VecDeque};
 
-		struct Helper<'a> {
-			matrix: &'a Matrix<Option<Tile>>,
-			stack: Vec<Vec2>,
-			/// Position -> how many steps it took to reach that position (if there are fewer steps in this solution, we should not skip it)
-			visited: HashMap<Vec2, usize>,
-			goal: Vec2,
-			goal_tile: Tile,
+		let mut queue = VecDeque::from([(start, 1)]);
+		let mut visited = HashSet::from([start]);
+		let mut traceback = HashMap::new();
+		let goal_tile = self.get(end).unwrap().unwrap();
+
+		fn trace_answer(mut current: Vec2, start: Vec2, traceback: &HashMap<Vec2, Vec2>) -> Vec<Vec2> {
+			let mut ret = Vec::with_capacity(Matrix::MAX_STEPS);
+			loop {
+				ret.push(current);
+				if current == start {
+					break;
+				}
+				current = traceback[&current];
+			}
+			ret.reverse();
+			ret
 		}
 
-		impl Helper<'_> {
-			fn solve(&mut self, current: Vec2) -> Option<Vec<Vec2>> {
-				let successors = self.matrix.successors(current, self.goal_tile);
-				for &successor in successors.iter() {
-					if successor == self.goal {
-						self.stack.push(successor);
-						return Some(self.stack.clone());
-					}
+		loop {
+			let (current, steps) = match queue.pop_front() {
+				Some(front) => front,
+				None => break None,
+			};
+			if current == end {
+				break Some(trace_answer(current, start, &traceback));
+			}
+			if steps >= Self::MAX_STEPS {
+				break None;
+			}
+			for successor in self.successors(current, goal_tile) {
+				if visited.contains(&successor) {
+					continue;
 				}
-				if self.stack.len() < Matrix::MAX_STEPS - 1 {
-					let mut best_solution: Option<Vec<Vec2>> = None;
-					for &successor in successors.iter() {
-						if self.visited.get(&successor).map(|&depth_visited| self.stack.len() >= depth_visited).unwrap_or(false) {
-							continue;
-						}
-						self.stack.push(successor);
-						self.visited.insert(successor, self.stack.len());
-						if let Some(solution) = self.solve(successor) {
-							if best_solution.as_ref().map(|best_solution| solution.len() < best_solution.len()).unwrap_or(true) {
-								best_solution = Some(solution);
-							}
-						}
-						self.stack.pop();
-					}
-					return best_solution;
-				}
-				None
+				traceback.insert(successor, current);
+				visited.insert(successor);
+				queue.push_back((successor, steps + 1));
 			}
 		}
-
-		let stack = vec![start];
-		let visited = HashMap::from([(start, 0)]);
-		Helper {
-			matrix: self,
-			stack,
-			visited,
-			goal: end,
-			goal_tile: self.get(end).unwrap().unwrap(), // the position is guaranteed to be inside the matrix by the caller
-		}
-		.solve(start)
 	}
 }
 
