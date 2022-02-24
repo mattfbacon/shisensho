@@ -28,10 +28,9 @@ impl<T> Matrix<T> {
 		}
 	}
 	pub fn swap(&mut self, a: Vec2, b: Vec2) {
-		match (self.index(a), self.index(b)) {
-			(Some(a), Some(b)) => self.data.swap(a, b),
-			_ => (),
-		}
+		let a = self.index(a).unwrap();
+		let b = self.index(b).unwrap();
+		self.data.swap(a, b);
 	}
 	pub fn get(&self, position: Vec2) -> Option<&T> {
 		self.data.get(self.index(position)?)
